@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html lang="bn" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2d2d2d">
+    <title>নাহিদ কুটির প্রো</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text: #1a1a1a;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border: #e5e5e5;
+            --primary: #000000;
+            --accent: #555555;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 8px;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0a0a0a;
+            --bg-secondary: #141414;
+            --text: #f5f5f5;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --border: #2a2a2a;
+            --primary: #ffffff;
+            --accent: #888888;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .error-banner {
+            display: none;
+            background: var(--danger);
+            color: white;
+            padding: 12px 20px;
+            font-size: 14px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10000;
+        }
+        .error-banner.show { display: block; }
+
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .login-logo {
+            width: 64px;
+            height: 64px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 32px;
+        }
+        .login-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .login-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 360px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--bg);
+            width: 100%;
+        }
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text);
+        }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-sm { padding: 8px 12px; font-size: 12px; }
+
+        .main-container { display: none; min-height: 100vh; }
+        .main-container.show { display: block; }
+
+        .header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-logo {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .header-title { font-size: 16px; font-weight: 600; }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+        .header-btn {
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: var(--radius);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .header-btn:hover { background: var(--border); }
+
+        .filter-bar {
+            padding: 12px 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+        }
+        .filter-bar select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .btn-print {
+            margin-left: auto;
+            padding: 8px 16px;
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            padding: 8px 20px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            scrollbar-width: none;
+        }
+        .tab-nav::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            flex-shrink: 0;
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: var(--radius);
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { background: var(--bg-secondary); }
+        .tab-btn.active {
+            background: var(--primary);
+            color: var(--bg);
+        }
+
+        .content-area {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: var(--bg);
+            margin-bottom: 16px;
+        }
+        .card + .card { border-top: 1px solid var(--border); padding-top: 16px; }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .stat-card {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .net-position {
+            margin-top: 16px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        .net-position .label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .net-position .value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .form-section {
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .form-section h3 {
+            font-size: 14px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .form-toggle-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 50;
+            display: none;
+        }
+        .form-toggle-btn.show { display: flex; align-items: center; justify-content: center; }
+
+        .table-container { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th {
+            text-align: left;
+            padding: 12px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 14px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:last-child td { border-bottom: none; }
+        .actions-cell { display: flex; gap: 6px; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-success { background: var(--success); color: white; }
+        .badge-danger { background: var(--danger); color: white; }
+        .badge-primary { background: var(--bg-secondary); color: var(--text); }
+
+        .unpaid-list { display: grid; gap: 10px; }
+        .unpaid-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+        }
+        .unpaid-item .room {
+            font-weight: 700;
+            font-size: 14px;
+            min-width: 60px;
+        }
+        .unpaid-item .info { flex: 1; }
+        .unpaid-item .name { font-weight: 500; font-size: 14px; }
+        .unpaid-item .amount {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--danger);
+        }
+        .unpaid-item .actions { display: flex; gap: 6px; }
+
+        .total-row { background: var(--bg-secondary); font-weight: 600; }
+
+        .backup-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .all-paid {
+            padding: 24px;
+            text-align: center;
+            background: var(--success);
+            color: white;
+            border-radius: var(--radius);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--text);
+            color: var(--bg);
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media print {
+            .header, .filter-bar, .tab-nav, .form-toggle-btn, .footer, .actions-cell { display: none !important; }
+            body { background: white; }
+            .content-area { padding: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .header-title { font-size: 14px; }
+            .content-area { padding: 16px; }
+            
+            .table-container { background: transparent; overflow: visible; }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tr {
+                background: var(--bg-secondary);
+                border-radius: var(--radius);
+                margin-bottom: 10px;
+                padding: 12px;
+            }
+            td {
+                padding: 8px 0;
+                border: none;
+                display: flex;
+                justify-content: space-between;
+            }
+            td::before {
+                content: attr(data-label);
+                font-weight: 500;
+                font-size: 12px;
+                color: var(--text-secondary);
+            }
+            .actions-cell {
+                justify-content: flex-end;
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px solid var(--border);
+            }
+
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { flex-direction: column; }
+            .filter-bar select, .btn-print { width: 100%; }
+            .btn-print { margin-left: 0; }
+            
+            .unpaid-item { flex-wrap: wrap; text-align: center; }
+            .unpaid-item .room { width: 100%; }
+            .unpaid-item .actions { width: 100%; justify-content: center; margin-top: 8px; }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="error-banner" id="errorBanner"></div>
+
+    <div class="login-screen" id="loginScreen">
+        <div class="login-logo">🏠</div>
+        <h1 class="login-title">নাহিদ কুটির প্রো</h1>
+        <p class="login-subtitle" id="loginSubtitle">Minimal Property Manager</p>
+        
+        <div class="login-card">
+            <div class="form-group">
+                <label id="lblEmail">ইমেইল</label>
+                <input type="email" class="form-input" id="emailInput" placeholder="example@email.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label id="lblPassword">পাসওয়ার্ড</label>
+                <input type="password" class="form-input" id="passwordInput" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()">
+                <span id="loginBtnText">লগইন করুন</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="main-container" id="mainContainer">
+        <header class="header">
+            <div class="header-left">
+                <div class="header-logo">🏠</div>
+                <div class="header-title">নাহিদ কুটির প্রো</div>
+            </div>
+            <div class="header-right">
+                <button class="header-btn" id="langBtn" onclick="toggleLanguage()">BN/EN</button>
+                <button class="header-btn" id="themeBtn" onclick="toggleTheme()">◐</button>
+                <button class="header-btn" onclick="handleLogout()">✕</button>
+            </div>
+        </header>
+
+        <div class="filter-bar">
+            <select id="yearFilter" onchange="applyFilters()">
+                <option value="2025">২০২৫</option>
+                <option value="2026">২০২৬</option>
+                <option value="2027">২০২৭</option>
+                <option value="2028">২০২৮</option>
+                <option value="all">সব বছর</option>
+            </select>
+            <select id="monthFilter" onchange="applyFilters()">
+                <option value="1">জানুয়ারি</option>
+                <option value="2">ফেব্রুয়ারি</option>
+                <option value="3">মার্চ</option>
+                <option value="4">এপ্রিল</option>
+                <option value="5">মে</option>
+                <option value="6">জুন</option>
+                <option value="7">জুলাই</option>
+                <option value="8">আগস্ট</option>
+                <option value="9">সেপ্টেম্বর</option>
+                <option value="10">অক্টোবর</option>
+                <option value="11">নভেম্বর</option>
+                <option value="12">ডিসেম্বর</option>
+                <option value="all">সব মাস</option>
+            </select>
+            <button class="btn-print" onclick="printReport()">📄 প্রিন্ট</button>
+        </div>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="brief" onclick="switchTab('brief')">📊 সারসংক্ষেপ</button>
+            <button class="tab-btn" data-tab="rooms" onclick="switchTab('rooms')">🚪 রুম</button>
+            <button class="tab-btn" data-tab="tenants" onclick="switchTab('tenants')">👥 ভাড়াটিয়া</button>
+            <button class="tab-btn" data-tab="rents" onclick="switchTab('rents')">💵 ভাড়া</button>
+            <button class="tab-btn" data-tab="unpaid" onclick="switchTab('unpaid')">⚠️ বকেয়া</button>
+            <button class="tab-btn" data-tab="expenses" onclick="switchTab('expenses')">🧾 খরচ</button>
+            <button class="tab-btn" data-tab="shop" onclick="switchTab('shop')">🏪 দোকান</button>
+        </nav>
+
+        <main class="content-area">
+            <!-- Brief Tab -->
+            <div class="tab-content active" id="tab-brief">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title" id="summaryTitle">📊 সারসংক্ষেপ</h2>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalRooms">০</div>
+                            <div class="stat-label" id="lblTotalRooms">মোট রুম</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalTenants">০</div>
+                            <div class="stat-label" id="lblTotalTenants">ভাড়াটিয়া</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalRent">৳০</div>
+                            <div class="stat-label" id="lblTotalRent">আদায়</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalDue" style="color: var(--danger)">৳০</div>
+                            <div class="stat-label" id="lblTotalDue">বকেয়া</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalExpenses" style="color: var(--warning)">৳০</div>
+                            <div class="stat-label" id="lblTotalExpenses">খরচ</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalShopDue" style="color: var(--text-secondary)">৳০</div>
+                            <div class="stat-label" id="lblTotalShopDue">দোকান বাকি</div>
+                        </div>
+                    </div>
+                    <div class="net-position" id="netPosition">
+                        <div class="label" id="lblNetPosition">নেট পজিশন</div>
+                        <div class="value" id="netPositionValue">৳০</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title" id="backupTitle">💾 ব্যাকআপ</h2>
+                    </div>
+                    <div class="backup-section">
+                        <button class="btn btn-secondary" onclick="downloadBackup()">📥 ডাউনলোড</button>
+                        <label class="btn btn-secondary">
+                            📤 রিস্টোর
+                            <input type="file" accept=".json" style="display:none" onchange="restoreBackup(event)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rooms Tab -->
+            <div class="tab-content" id="tab-rooms">
+                <div class="form-section" id="roomFormSection">
+                    <h3 id="roomFormTitle">নতুন রুম</h3>
+                    <input type="hidden" id="editRoomId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label id="lblRoomNo">রুম নং</label>
+                            <input type="text" class="form-input" id="roomNo" placeholder="101">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblRoomRent">ভাড়া (৳)</label>
+                            <input type="number" class="form-input" id="roomRent" placeholder="5000">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblGasBill">গ্যাস (৳)</label>
+                            <input type="number" class="form-input" id="gasBill" placeholder="500">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblWaterBill">পানি (৳)</label>
+                            <input type="number" class="form-input" id="waterBill" placeholder="200">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblWasteBill">ময়লা (৳)</label>
+                            <input type="number" class="form-input" id="wasteBill" placeholder="100">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblMeterNo">মিটার</label>
+                            <input type="text" class="form-input" id="meterNo" placeholder="মিটার-001">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 16px;">
+                        <button class="btn btn-primary" id="saveRoomBtn" onclick="saveRoom()">💾 সেভ</button>
+                        <button class="btn btn-secondary" onclick="cancelRoomEdit()">রদ</button>
+                    </div>
+                </div>
+
+                <button class="form-toggle-btn show" id="roomAddBtn" onclick="toggleRoomForm()">+</button>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th id="thRoomNo">রুম</th>
+                                <th id="thRent">ভাড়া</th>
+                                <th id="thGas">গ্যাস</th>
+                                <th id="thWater">পানি</th>
+                                <th id="thWaste">ময়লা</th>
+                                <th id="thTotal">মোট</th>
+                                <th id="thMeter">মিটার</th>
+                                <th id="thActions"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="roomsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tenants Tab -->
+            <div class="tab-content" id="tab-tenants">
+                <div class="form-section" id="tenantFormSection">
+                    <h3 id="tenantFormTitle">নতুন ভাড়াটিয়া</h3>
+                    <input type="hidden" id="editTenantId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label id="lblTenantName">নাম</label>
+                            <input type="text" class="form-input" id="tenantName" placeholder="পূর্ণ নাম">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblTenantPhone">ফোন</label>
+                            <input type="tel" class="form-input" id="tenantPhone" placeholder="01XXXXXXXXX">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblTenantRoom">রুম</label>
+                            <select class="form-input" id="tenantRoom">
+                                <option value="">সিলেক্ট</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label id="lblTenantNID">NID</label>
+                            <input type="text" class="form-input" id="tenantNID" placeholder="NID-XXXXX">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 16px;">
+                        <button class="btn btn-primary" id="saveTenantBtn" onclick="saveTenant()">💾 সেভ</button>
+                        <button class="btn btn-secondary" onclick="cancelTenantEdit()">রদ</button>
+                    </div>
+                </div>
+
+                <button class="form-toggle-btn show" id="tenantAddBtn" onclick="toggleTenantForm()">+</button>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th id="thName">নাম</th>
+                                <th id="thPhone">ফোন</th>
+                                <th id="thRoom">রুম</th>
+                                <th id="thNID">NID</th>
+                                <th id="thTenantActions"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tenantsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Rent Tab -->
+            <div class="tab-content" id="tab-rents">
+                <div class="form-section" id="rentFormSection">
+                    <h3 id="rentFormTitle">ভাড়া আদায়</h3>
+                    <input type="hidden" id="editRentId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label id="lblRentDate">তারিখ</label>
+                            <input type="date" class="form-input" id="rentDate">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblRentTenant">ভাড়াটিয়া</label>
+                            <select class="form-input" id="rentTenant" onchange="updateRentAutoFill()">
+                                <option value="">সিলেক্ট</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label id="lblRentRoom">রুম</label>
+                            <input type="text" class="form-input" id="rentRoom" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label id="lblTotalCost">মোট (৳)</label>
+                            <input type="number" class="form-input" id="totalCost" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label id="lblPaidAmount">জমা (৳)</label>
+                            <input type="number" class="form-input" id="paidAmount" placeholder="0" oninput="calcDue()">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblDueAmount">বকেয়া (৳)</label>
+                            <input type="number" class="form-input" id="dueAmount" readonly>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 16px;">
+                        <button class="btn btn-primary" id="saveRentBtn" onclick="saveRent()">💾 সেভ</button>
+                        <button class="btn btn-secondary" onclick="cancelRentEdit()">রদ</button>
+                    </div>
+                </div>
+
+                <button class="form-toggle-btn show" id="rentAddBtn" onclick="toggleRentForm()">+</button>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th id="thDate">তারিখ</th>
+                                <th id="thTenant">ভাড়াটিয়া</th>
+                                <th id="thRentRoom">রুম</th>
+                                <th id="thRentAmt">ভাড়া</th>
+                                <th id="thPaid">জমা</th>
+                                <th id="thDue">বকেয়া</th>
+                                <th id="thStatus">স্ট্যাটাস</th>
+                                <th id="thRentActions"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="rentsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Unpaid Tab -->
+            <div class="tab-content" id="tab-unpaid">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title" id="unpaidTitle">⚠️ অনাদায়ী</h2>
+                    </div>
+                    <div id="unpaidList" class="unpaid-list"></div>
+                    <div style="margin-top: 16px; text-align: right;">
+                        <span id="lblTotalUnpaid">মোট বকেয়া:</span>
+                        <strong id="totalUnpaidAmount" style="color: var(--danger)">৳০</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses Tab -->
+            <div class="tab-content" id="tab-expenses">
+                <div class="form-section" id="expenseFormSection">
+                    <h3 id="expenseFormTitle">নতুন খরচ</h3>
+                    <input type="hidden" id="editExpenseId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label id="lblExpDate">তারিখ</label>
+                            <input type="date" class="form-input" id="expDate">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblExpDesc">বিবরণ</label>
+                            <input type="text" class="form-input" id="expDesc" placeholder="খরচের বিবরণ">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblExpAmount">পরিমাণ (৳)</label>
+                            <input type="number" class="form-input" id="expAmount" placeholder="1000">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 16px;">
+                        <button class="btn btn-primary" id="saveExpenseBtn" onclick="saveExpense()">💾 সেভ</button>
+                        <button class="btn btn-secondary" onclick="cancelExpenseEdit()">রদ</button>
+                    </div>
+                </div>
+
+                <button class="form-toggle-btn show" id="expenseAddBtn" onclick="toggleExpenseForm()">+</button>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th id="thExpDate">তারিখ</th>
+                                <th id="thExpDesc">বিবরণ</th>
+                                <th id="thExpAmount">পরিমাণ</th>
+                                <th id="thExpActions"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Shop Tab -->
+            <div class="tab-content" id="tab-shop">
+                <div class="form-section" id="shopFormSection">
+                    <h3 id="shopFormTitle">দোকান বাকি</h3>
+                    <input type="hidden" id="editShopId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label id="lblShopDate">তারিখ</label>
+                            <input type="date" class="form-input" id="shopDate">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblShopDesc">বিবরণ</label>
+                            <input type="text" class="form-input" id="shopDesc" placeholder="বাকির বিবরণ">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblShopAmount">টাকা (৳)</label>
+                            <input type="number" class="form-input" id="shopAmount" placeholder="500">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 16px;">
+                        <button class="btn btn-primary" id="saveShopBtn" onclick="saveShopDue()">💾 সেভ</button>
+                        <button class="btn btn-secondary" onclick="cancelShopEdit()">রদ</button>
+                    </div>
+                </div>
+
+                <button class="form-toggle-btn show" id="shopAddBtn" onclick="toggleShopForm()">+</button>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th id="thShopDate">তারিখ</th>
+                                <th id="thShopDesc">বিবরণ</th>
+                                <th id="thShopAmount">টাকা</th>
+                                <th id="thShopActions"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="shopTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>নাহিদ কুটির প্রো | v10.9</p>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFLAKmLLc9k4m0YVfO0lgEbx9BqGz7Fso",
+            authDomain: "test-kutir-49a87.firebaseapp.com",
+            projectId: "test-kutir-49a87",
+            storageBucket: "test-kutir-49a87.firebasestorage.app",
+            messagingSenderId: "1013086364698",
+            appId: "1:1013086364698:web:b4d2f6092c51143ca91da3",
+            measurementId: "G-SCZWSGEPHK"
+        };
+
+        let app, auth, db;
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            console.log("Firebase initialized successfully");
+        } catch (e) {
+            console.error("Firebase init error:", e);
+            document.getElementById('errorBanner').textContent = "Firebase Error: " + e.message;
+            document.getElementById('errorBanner').classList.add('show');
+        }
+
+        // Translations
+        const translations = {
+            bn: {
+                loginSubtitle: "Minimal Property Manager",
+                lblEmail: "ইমেইল",
+                lblPassword: "পাসওয়ার্ড",
+                loginBtn: "লগইন করুন",
+                loginIn: "⏳ লগইন হচ্ছে...",
+                summaryTitle: "📊 সারসংক্ষেপ",
+                lblTotalRooms: "মোট রুম",
+                lblTotalTenants: "ভাড়াটিয়া",
+                lblTotalRent: "আদায়",
+                lblTotalDue: "বকেয়া",
+                lblTotalExpenses: "খরচ",
+                lblTotalShopDue: "দোকান বাকি",
+                lblNetPosition: "নেট পজিশন",
+                backupTitle: "💾 ব্যাকআপ",
+                roomFormTitle: "নতুন রুম",
+                roomUpdateTitle: "রুম আপডেট",
+                lblRoomNo: "রুম নং",
+                lblRoomRent: "ভাড়া (৳)",
+                lblGasBill: "গ্যাস (৳)",
+                lblWaterBill: "পানি (৳)",
+                lblWasteBill: "ময়লা (৳)",
+                lblMeterNo: "মিটার",
+                thRoomNo: "রুম",
+                thRent: "ভাড়া",
+                thGas: "গ্যাস",
+                thWater: "পানি",
+                thWaste: "ময়লা",
+                thTotal: "মোট",
+                thMeter: "মিটার",
+                thActions: "",
+                tenantFormTitle: "নতুন ভাড়াটিয়া",
+                tenantUpdateTitle: "ভাড়াটিয়া আপডেট",
+                lblTenantName: "নাম",
+                lblTenantPhone: "ফোন",
+                lblTenantRoom: "রুম",
+                lblTenantNID: "NID",
+                thName: "নাম",
+                thPhone: "ফোন",
+                thRoom: "রুম",
+                thNID: "NID",
+                thTenantActions: "",
+                rentFormTitle: "ভাড়া আদায়",
+                rentUpdateTitle: "ভাড়া আপডেট",
+                lblRentDate: "তারিখ",
+                lblRentTenant: "ভাড়াটিয়া",
+                lblRentRoom: "রুম",
+                lblTotalCost: "মোট (৳)",
+                lblPaidAmount: "জমা (৳)",
+                lblDueAmount: "বকেয়া (৳)",
+                thDate: "তারিখ",
+                thTenant: "ভাড়াটিয়া",
+                thRentRoom: "রুম",
+                thRentAmt: "ভাড়া",
+                thPaid: "জমা",
+                thDue: "বকেয়া",
+                thStatus: "স্ট্যাটাস",
+                thRentActions: "",
+                unpaidTitle: "⚠️ অনাদায়ী",
+                lblTotalUnpaid: "মোট বকেয়া:",
+                expenseFormTitle: "নতুন খরচ",
+                expenseUpdateTitle: "খরচ আপডেট",
+                lblExpDate: "তারিখ",
+                lblExpDesc: "বিবরণ",
+                lblExpAmount: "পরিমাণ (৳)",
+                thExpDate: "তারিখ",
+                thExpDesc: "বিবরণ",
+                thExpAmount: "পরিমাণ",
+                thExpActions: "",
+                shopFormTitle: "দোকান বাকি",
+                shopUpdateTitle: "দোকান বাকি আপডেট",
+                lblShopDate: "তারিখ",
+                lblShopDesc: "বিবরণ",
+                lblShopAmount: "টাকা (৳)",
+                thShopDate: "তারিখ",
+                thShopDesc: "বিবরণ",
+                thShopAmount: "টাকা",
+                thShopActions: "",
+                statusPaid: "পরিশোধিত",
+                statusDue: "বকেয়া",
+                allPaid: "🎉 সবার ভাড়া আদায় সম্পূর্ণ!",
+                noRooms: "কোনো রুম নেই",
+                noTenants: "কোনো ভাড়াটিয়া নেই",
+                noRents: "কোনো রেকর্ড নেই",
+                noExpenses: "কোনো খরচ নেই",
+                noShopDues: "কোনো দোকান বাকি নেই",
+                saveSuccess: "✅ সেভ সফল",
+                updateSuccess: "✅ আপডেট সফল",
+                deleteSuccess: "🗑️ ডিলিট সফল",
+                backupSuccess: "📥 ব্যাকআপ ডাউনলোড হচ্ছে...",
+                restoreSuccess: "📤 ডেটা রিস্টোর সফল",
+                duplicatesSkipped: "ডুপ্লিকেট এড়ানো হয়েছে",
+                edit: "✎",
+                delete: "✕",
+                cancel: "রদ",
+                save: "💾 সেভ"
+            },
+            en: {
+                loginSubtitle: "Minimal Property Manager",
+                lblEmail: "Email",
+                lblPassword: "Password",
+                loginBtn: "Login",
+                loginIn: "⏳ Logging in...",
+                summaryTitle: "📊 Summary",
+                lblTotalRooms: "Total Rooms",
+                lblTotalTenants: "Tenants",
+                lblTotalRent: "Collected",
+                lblTotalDue: "Due",
+                lblTotalExpenses: "Expenses",
+                lblTotalShopDue: "Shop Dues",
+                lblNetPosition: "Net Position",
+                backupTitle: "💾 Backup",
+                roomFormTitle: "Add Room",
+                roomUpdateTitle: "Update Room",
+                lblRoomNo: "Room No",
+                lblRoomRent: "Rent (৳)",
+                lblGasBill: "Gas (৳)",
+                lblWaterBill: "Water (৳)",
+                lblWasteBill: "Waste (৳)",
+                lblMeterNo: "Meter",
+                thRoomNo: "Room",
+                thRent: "Rent",
+                thGas: "Gas",
+                thWater: "Water",
+                thWaste: "Waste",
+                thTotal: "Total",
+                thMeter: "Meter",
+                thActions: "",
+                tenantFormTitle: "Add Tenant",
+                tenantUpdateTitle: "Update Tenant",
+                lblTenantName: "Name",
+                lblTenantPhone: "Phone",
+                lblTenantRoom: "Room",
+                lblTenantNID: "NID",
+                thName: "Name",
+                thPhone: "Phone",
+                thRoom: "Room",
+                thNID: "NID",
+                thTenantActions: "",
+                rentFormTitle: "Rent Collection",
+                rentUpdateTitle: "Update Rent",
+                lblRentDate: "Date",
+                lblRentTenant: "Tenant",
+                lblRentRoom: "Room",
+                lblTotalCost: "Total (৳)",
+                lblPaidAmount: "Paid (৳)",
+                lblDueAmount: "Due (৳)",
+                thDate: "Date",
+                thTenant: "Tenant",
+                thRentRoom: "Room",
+                thRentAmt: "Rent",
+                thPaid: "Paid",
+                thDue: "Due",
+                thStatus: "Status",
+                thRentActions: "",
+                unpaidTitle: "⚠️ Unpaid",
+                lblTotalUnpaid: "Total Due:",
+                expenseFormTitle: "Add Expense",
+                expenseUpdateTitle: "Update Expense",
+                lblExpDate: "Date",
+                lblExpDesc: "Description",
+                lblExpAmount: "Amount (৳)",
+                thExpDate: "Date",
+                thExpDesc: "Description",
+                thExpAmount: "Amount",
+                thExpActions: "",
+                shopFormTitle: "Shop Due",
+                shopUpdateTitle: "Update Shop Due",
+                lblShopDate: "Date",
+                lblShopDesc: "Description",
+                lblShopAmount: "Amount (৳)",
+                thShopDate: "Date",
+                thShopDesc: "Description",
+                thShopAmount: "Amount",
+                thShopActions: "",
+                statusPaid: "Paid",
+                statusDue: "Due",
+                allPaid: "🎉 All rent collected!",
+                noRooms: "No rooms",
+                noTenants: "No tenants",
+                noRents: "No records",
+                noExpenses: "No expenses",
+                noShopDues: "No shop dues",
+                saveSuccess: "✅ Saved",
+                updateSuccess: "✅ Updated",
+                deleteSuccess: "🗑️ Deleted",
+                backupSuccess: "📥 Downloading backup...",
+                restoreSuccess: "📤 Data restored",
+                duplicatesSkipped: "Duplicates skipped",
+                edit: "✎",
+                delete: "✕",
+                cancel: "Cancel",
+                save: "💾 Save"
+            }
+        };
+
+        const monthNames = {
+            bn: ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'],
+            en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        };
+
+        // State
+        let currentLang = localStorage.getItem('nk_lang') || 'bn';
+        let currentTheme = localStorage.getItem('nk_theme') || 'light';
+        let currentTab = localStorage.getItem('nk_tab') || 'brief';
+        let unsubscribes = [];
+        
+        let rooms = [];
+        let tenants = [];
+        let rents = [];
+        let expenses = [];
+        let shopDues = [];
+
+        let editRoomId = null;
+        let editTenantId = null;
+        let editRentId = null;
+        let editExpenseId = null;
+        let editShopId = null;
+
+        // Form visibility states
+        let roomFormVisible = false;
+        let tenantFormVisible = false;
+        let rentFormVisible = false;
+        let expenseFormVisible = false;
+        let shopFormVisible = false;
+
+        // Helpers
+        function escapeHTML(str) {
+            if (str == null) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function formatCurrency(amount) {
+            if (amount == null) return '৳০';
+            return '৳' + Number(amount).toLocaleString();
+        }
+
+        function toBanglaNum(num) {
+            return String(num).replace(/[0-9]/g, d => ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'][d]);
+        }
+
+        function showError(message) {
+            const banner = document.getElementById('errorBanner');
+            banner.textContent = message;
+            banner.classList.add('show');
+            setTimeout(() => banner.classList.remove('show'), 5000);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Form toggle functions
+        function toggleRoomForm() {
+            roomFormVisible = !roomFormVisible;
+            const form = document.getElementById('roomFormSection');
+            const btn = document.getElementById('roomAddBtn');
+            form.style.display = roomFormVisible ? 'block' : 'none';
+            btn.textContent = roomFormVisible ? '✕' : '+';
+            btn.style.background = roomFormVisible ? 'var(--danger)' : 'var(--primary)';
+        }
+
+        function toggleTenantForm() {
+            tenantFormVisible = !tenantFormVisible;
+            const form = document.getElementById('tenantFormSection');
+            const btn = document.getElementById('tenantAddBtn');
+            form.style.display = tenantFormVisible ? 'block' : 'none';
+            btn.textContent = tenantFormVisible ? '✕' : '+';
+            btn.style.background = tenantFormVisible ? 'var(--danger)' : 'var(--primary)';
+        }
+
+        function toggleRentForm() {
+            rentFormVisible = !rentFormVisible;
+            const form = document.getElementById('rentFormSection');
+            const btn = document.getElementById('rentAddBtn');
+            form.style.display = rentFormVisible ? 'block' : 'none';
+            btn.textContent = rentFormVisible ? '✕' : '+';
+            btn.style.background = rentFormVisible ? 'var(--danger)' : 'var(--primary)';
+        }
+
+        function toggleExpenseForm() {
+            expenseFormVisible = !expenseFormVisible;
+            const form = document.getElementById('expenseFormSection');
+            const btn = document.getElementById('expenseAddBtn');
+            form.style.display = expenseFormVisible ? 'block' : 'none';
+            btn.textContent = expenseFormVisible ? '✕' : '+';
+            btn.style.background = expenseFormVisible ? 'var(--danger)' : 'var(--primary)';
+        }
+
+        function toggleShopForm() {
+            shopFormVisible = !shopFormVisible;
+            const form = document.getElementById('shopFormSection');
+            const btn = document.getElementById('shopAddBtn');
+            form.style.display = shopFormVisible ? 'block' : 'none';
+            btn.textContent = shopFormVisible ? '✕' : '+';
+            btn.style.background = shopFormVisible ? 'var(--danger)' : 'var(--primary)';
+        }
+
+        // Language
+        function toggleLanguage() {
+            currentLang = currentLang === 'bn' ? 'en' : 'bn';
+            localStorage.setItem('nk_lang', currentLang);
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            const t = translations[currentLang];
+            Object.keys(t).forEach(key => {
+                const el = document.getElementById(key);
+                if (el) el.textContent = t[key];
+            });
+
+            const yearSel = document.getElementById('yearFilter');
+            yearSel.options[yearSel.options.length - 1].textContent = t.allYears || 'সব বছর';
+
+            const monthSel = document.getElementById('monthFilter');
+            monthNames[currentLang].forEach((name, i) => monthSel.options[i].textContent = name);
+            monthSel.options[12].textContent = t.allMonths || 'সব মাস';
+
+            document.getElementById('langBtn').textContent = currentLang === 'bn' ? 'BN/EN' : 'EN/BN';
+            document.documentElement.lang = currentLang;
+
+            renderRooms();
+            renderTenants();
+            renderRents();
+            renderExpenses();
+            renderShopDues();
+            renderUnpaid();
+            updateDashboard();
+        }
+
+        // Theme
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('nk_theme', currentTheme);
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            document.getElementById('themeBtn').textContent = currentTheme === 'light' ? '◐' : '◑';
+        }
+
+        // Auth
+        function handleLogin() {
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const btn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('loginBtnText');
+
+            if (!email || !password) {
+                showError('অনুগ্রহ করে ইমেইল ও পাসওয়ার্ড দিন');
+                return;
+            }
+
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span>';
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    btn.disabled = false;
+                    btnText.textContent = translations[currentLang].loginBtn;
+                })
+                .catch(error => {
+                    btn.disabled = false;
+                    btnText.textContent = translations[currentLang].loginBtn;
+                    const errors = {
+                        'auth/wrong-password': '❌ পাসওয়ার্ড ভুল',
+                        'auth/user-not-found': '❌ অ্যাকাউন্ট পাওয়া যায়নি',
+                        'auth/invalid-email': '❌ সঠিক ইমেইল দিন',
+                        'auth/too-many-requests': '⏰ অনেকবার চেষ্টা করা হয়েছে',
+                        'auth/network-request-failed': '🌐 নেটওয়ার্ক সমস্যা',
+                        'auth/invalid-credential': '❌ ইমেইল বা পাসওয়ার্ড ভুল'
+                    };
+                    showError(errors[error.code] || '❌ লগইন ব্যর্থ');
+                });
+        }
+
+        function handleLogout() {
+            if (confirm('লগআউট করতে চান?')) {
+                auth.signOut().catch(e => showError(e.message));
+            }
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log("User logged in:", user.email);
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainContainer').classList.add('show');
+                initFirestoreListeners();
+                applyTheme();
+                applyLanguage();
+                switchTab(currentTab);
+                setDefaultDates();
+            } else {
+                console.log("User logged out");
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('mainContainer').classList.remove('show');
+                unsubscribes.forEach(unsub => unsub());
+                unsubscribes = [];
+            }
+        });
+
+        // Tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            const tab = document.getElementById('tab-' + tabName);
+            const btn = document.querySelector(`[data-tab="${tabName}"]`);
+            
+            if (tab) tab.classList.add('active');
+            if (btn) btn.classList.add('active');
+            
+            currentTab = tabName;
+            localStorage.setItem('nk_tab', tabName);
+            
+            if (tabName === 'unpaid') renderUnpaid();
+            if (tabName === 'brief') updateDashboard();
+        }
+
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            console.log("Setting default dates to:", today);
+            
+            document.getElementById('rentDate').value = today;
+            document.getElementById('expDate').value = today;
+            document.getElementById('shopDate').value = today;
+
+            const now = new Date();
+            document.getElementById('yearFilter').value = now.getFullYear().toString();
+            document.getElementById('monthFilter').value = (now.getMonth() + 1).toString();
+        }
+
+        // Firestore
+        function initFirestoreListeners() {
+            console.log("Initializing Firestore listeners...");
+
+            const unsubRooms = db.collection('rooms').orderBy('roomNo', 'asc').onSnapshot(snap => {
+                console.log("Rooms updated:", snap.size);
+                rooms = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderRooms();
+                updateRoomSelects();
+                updateDashboard();
+            }, err => {
+                console.error('Rooms error:', err);
+                showError('Room load error: ' + err.message);
+            });
+            unsubscribes.push(unsubRooms);
+
+            const unsubTenants = db.collection('tenants').orderBy('name', 'asc').onSnapshot(snap => {
+                console.log("Tenants updated:", snap.size);
+                tenants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderTenants();
+                updateTenantSelects();
+                updateDashboard();
+            }, err => {
+                console.error('Tenants error:', err);
+                showError('Tenant load error: ' + err.message);
+            });
+            unsubscribes.push(unsubTenants);
+
+            const unsubRents = db.collection('rents').orderBy('date', 'desc').onSnapshot(snap => {
+                console.log("Rents updated:", snap.size);
+                rents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderRents();
+                renderUnpaid();
+                updateDashboard();
+            }, err => {
+                console.error('Rents error:', err);
+                showError('Rent load error: ' + err.message);
+            });
+            unsubscribes.push(unsubRents);
+
+            const unsubExpenses = db.collection('expenses').orderBy('date', 'desc').onSnapshot(snap => {
+                console.log("Expenses updated:", snap.size);
+                expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderExpenses();
+                updateDashboard();
+            }, err => {
+                console.error('Expenses error:', err);
+                showError('Expense load error: ' + err.message);
+            });
+            unsubscribes.push(unsubExpenses);
+
+            const unsubShop = db.collection('dokanBaki').orderBy('date', 'desc').onSnapshot(snap => {
+                console.log("Shop Dues updated:", snap.size);
+                shopDues = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderShopDues();
+                updateDashboard();
+            }, err => {
+                console.error('Shop error:', err);
+                showError('Shop load error: ' + err.message);
+            });
+            unsubscribes.push(unsubShop);
+        }
+
+        // Render Functions
+        function renderRooms() {
+            const t = translations[currentLang];
+            const tbody = document.getElementById('roomsTable');
+            
+            if (rooms.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${t.noRooms}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rooms.map(room => {
+                const total = (room.rent || 0) + (room.gasBill || 0) + (room.waterBill || 0) + (room.wasteBill || 0);
+                return `
+                    <tr>
+                        <td data-label="${t.thRoomNo}"><strong>${escapeHTML(room.roomNo)}</strong></td>
+                        <td data-label="${t.thRent}">${formatCurrency(room.rent)}</td>
+                        <td data-label="${t.thGas}">${formatCurrency(room.gasBill)}</td>
+                        <td data-label="${t.thWater}">${formatCurrency(room.waterBill)}</td>
+                        <td data-label="${t.thWaste}">${formatCurrency(room.wasteBill)}</td>
+                        <td data-label="${t.thTotal}"><strong>${formatCurrency(total)}</strong></td>
+                        <td data-label="${t.thMeter}">${escapeHTML(room.meterNo || '-')}</td>
+                        <td data-label="">
+                            <div class="actions-cell">
+                                <button class="btn btn-sm btn-secondary" onclick="editRoom('${room.id}')">✎</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteRoom('${room.id}')">✕</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderTenants() {
+            const t = translations[currentLang];
+            const tbody = document.getElementById('tenantsTable');
+            
+            if (tenants.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${t.noTenants}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = tenants.map(tenant => `
+                <tr>
+                    <td data-label="${t.thName}">${escapeHTML(tenant.name)}</td>
+                    <td data-label="${t.thPhone}">${escapeHTML(tenant.phone || '-')}</td>
+                    <td data-label="${t.thRoom}"><span class="badge badge-primary">${escapeHTML(tenant.roomNo)}</span></td>
+                    <td data-label="${t.thNID}">${escapeHTML(tenant.nid || '-')}</td>
+                    <td data-label="">
+                        <div class="actions-cell">
+                            <button class="btn btn-sm btn-secondary" onclick="editTenant('${tenant.id}')">✎</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTenant('${tenant.id}')">✕</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderRents() {
+            const t = translations[currentLang];
+            const tbody = document.getElementById('rentsTable');
+            const yearFilter = document.getElementById('yearFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+
+            let filteredRents = rents;
+            if (yearFilter !== 'all') filteredRents = filteredRents.filter(r => r.date && r.date.startsWith(yearFilter));
+            if (monthFilter !== 'all') filteredRents = filteredRents.filter(r => r.date && r.date.slice(5, 7) === monthFilter.padStart(2, '0'));
+
+            if (filteredRents.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${t.noRents}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredRents.map(rent => {
+                const tenant = tenants.find(t => t.id === rent.tenantId);
+                const isPaid = !rent.due || rent.due <= 0;
+                const dateFormatted = rent.date ? formatDate(rent.date) : '-';
+
+                return `
+                    <tr>
+                        <td data-label="${t.thDate}">${dateFormatted}</td>
+                        <td data-label="${t.thTenant}">${escapeHTML(tenant?.name || rent.tenantName || '-')}</td>
+                        <td data-label="${t.thRentRoom}"><span class="badge badge-primary">${escapeHTML(rent.roomNo || '-')}</span></td>
+                        <td data-label="${t.thRentAmt}">${formatCurrency(rent.totalCost)}</td>
+                        <td data-label="${t.thPaid}">${formatCurrency(rent.paid)}</td>
+                        <td data-label="${t.thDue}"><strong style="color: ${isPaid ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(rent.due)}</strong></td>
+                        <td data-label="${t.thStatus}"><span class="badge ${isPaid ? 'badge-success' : 'badge-danger'}">${isPaid ? t.statusPaid : t.statusDue}</span></td>
+                        <td data-label="">
+                            <div class="actions-cell">
+                                ${tenant?.phone ? `<button class="btn btn-sm btn-secondary" onclick="sendWhatsApp('${tenant.phone}', '${escapeHTML(tenant?.name || '')}', '${rent.roomNo || ''}', ${rent.due || 0})">💬</button>` : ''}
+                                <button class="btn btn-sm btn-secondary" onclick="editRent('${rent.id}')">✎</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteRent('${rent.id}')">✕</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderUnpaid() {
+            const t = translations[currentLang];
+            const container = document.getElementById('unpaidList');
+            const totalEl = document.getElementById('totalUnpaidAmount');
+
+            const now = new Date();
+            const currentMonthPrefix = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+
+            const unpaidList = [];
+            let totalUnpaid = 0;
+
+            tenants.forEach(tenant => {
+                const room = rooms.find(r => r.roomNo === tenant.roomNo);
+                if (!room) return;
+
+                const totalCost = (room.rent || 0) + (room.gasBill || 0) + (room.waterBill || 0) + (room.wasteBill || 0);
+                const paidThisMonth = rents.find(r => r.tenantId === tenant.id && r.date && r.date.startsWith(currentMonthPrefix) && (!r.due || r.due <= 0));
+
+                if (!paidThisMonth) {
+                    unpaidList.push({ tenant, room, estimatedDue: totalCost });
+                    totalUnpaid += totalCost;
+                }
+            });
+
+            rents.forEach(rent => {
+                if (rent.due && rent.due > 0) {
+                    const tenant = tenants.find(t => t.id === rent.tenantId);
+                    if (tenant && !unpaidList.find(u => u.tenant.id === tenant.id)) {
+                        unpaidList.push({ tenant, room: rooms.find(r => r.roomNo === rent.roomNo), estimatedDue: rent.due });
+                        totalUnpaid += rent.due;
+                    }
+                }
+            });
+
+            if (unpaidList.length === 0) {
+                container.innerHTML = `<div class="all-paid">${t.allPaid}</div>`;
+                totalEl.textContent = formatCurrency(0);
+                return;
+            }
+
+            container.innerHTML = unpaidList.map(item => {
+                const phone = item.tenant.phone || '';
+                return `
+                    <div class="unpaid-item">
+                        <span class="room">${escapeHTML(item.room?.roomNo || '')}</span>
+                        <div class="info">
+                            <div class="name">${escapeHTML(item.tenant.name || '')}</div>
+                            <div class="amount">${formatCurrency(item.estimatedDue)}</div>
+                        </div>
+                        <div class="actions">
+                            ${phone ? `
+                                <button class="btn btn-sm btn-secondary" onclick="sendSMS('${formatPhoneForMessage(phone)}', '${escapeHTML(item.tenant.name || '')}', '${item.room?.roomNo || ''}', ${item.estimatedDue})">📱</button>
+                                <button class="btn btn-sm btn-secondary" onclick="sendWhatsApp('${phone}', '${escapeHTML(item.tenant.name || '')}', '${item.room?.roomNo || ''}', ${item.estimatedDue})">💬</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            totalEl.textContent = formatCurrency(totalUnpaid);
+        }
+
+        function renderExpenses() {
+            const t = translations[currentLang];
+            const tbody = document.getElementById('expensesTable');
+            const yearFilter = document.getElementById('yearFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+
+            let filteredExpenses = expenses;
+            if (yearFilter !== 'all') filteredExpenses = filteredExpenses.filter(e => e.date && e.date.startsWith(yearFilter));
+            if (monthFilter !== 'all') filteredExpenses = filteredExpenses.filter(e => e.date && e.date.slice(5, 7) === monthFilter.padStart(2, '0'));
+
+            const total = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+            if (filteredExpenses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-state">${t.noExpenses}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredExpenses.map(exp => `
+                <tr>
+                    <td data-label="${t.thExpDate}">${formatDate(exp.date)}</td>
+                    <td data-label="${t.thExpDesc}">${escapeHTML(exp.description)}</td>
+                    <td data-label="${t.thExpAmount}"><strong>${formatCurrency(exp.amount)}</strong></td>
+                    <td data-label="">
+                        <div class="actions-cell">
+                            <button class="btn btn-sm btn-secondary" onclick="editExpense('${exp.id}')">✎</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')">✕</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('') + `
+                <tr class="total-row">
+                    <td data-label="">মোট</td>
+                    <td></td>
+                    <td data-label="পরিমাণ"><strong>${formatCurrency(total)}</strong></td>
+                    <td></td>
+                </tr>
+            `;
+        }
+
+        function renderShopDues() {
+            const t = translations[currentLang];
+            const tbody = document.getElementById('shopTable');
+            const yearFilter = document.getElementById('yearFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+
+            let filteredShop = shopDues;
+            if (yearFilter !== 'all') filteredShop = filteredShop.filter(s => s.date && s.date.startsWith(yearFilter));
+            if (monthFilter !== 'all') filteredShop = filteredShop.filter(s => s.date && s.date.slice(5, 7) === monthFilter.padStart(2, '0'));
+
+            const total = filteredShop.reduce((sum, s) => sum + (s.amount || 0), 0);
+
+            if (filteredShop.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-state">${t.noShopDues}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredShop.map(shop => `
+                <tr>
+                    <td data-label="${t.thShopDate}">${formatDate(shop.date)}</td>
+                    <td data-label="${t.thShopDesc}">${escapeHTML(shop.description)}</td>
+                    <td data-label="${t.thShopAmount}"><strong>${formatCurrency(shop.amount)}</strong></td>
+                    <td data-label="">
+                        <div class="actions-cell">
+                            <button class="btn btn-sm btn-secondary" onclick="editShopDue('${shop.id}')">✎</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteShopDue('${shop.id}')">✕</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('') + `
+                <tr class="total-row">
+                    <td data-label="">মোট</td>
+                    <td></td>
+                    <td data-label="টাকা"><strong>${formatCurrency(total)}</strong></td>
+                    <td></td>
+                </tr>
+            `;
+        }
+
+        function updateDashboard() {
+            const yearFilter = document.getElementById('yearFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+
+            let filteredRents = rents;
+            if (yearFilter !== 'all') filteredRents = filteredRents.filter(r => r.date && r.date.startsWith(yearFilter));
+            if (monthFilter !== 'all') filteredRents = filteredRents.filter(r => r.date && r.date.slice(5, 7) === monthFilter.padStart(2, '0'));
+
+            let filteredExpenses = expenses;
+            if (yearFilter !== 'all') filteredExpenses = filteredExpenses.filter(e => e.date && e.date.startsWith(yearFilter));
+            if (monthFilter !== 'all') filteredExpenses = filteredExpenses.filter(e => e.date && e.date.slice(5, 7) === monthFilter.padStart(2, '0'));
+
+            let filteredShop = shopDues;
+            if (yearFilter !== 'all') filteredShop = filteredShop.filter(s => s.date && s.date.startsWith(yearFilter));
+            if (monthFilter !== 'all') filteredShop = filteredShop.filter(s => s.date && s.date.slice(5, 7) === monthFilter.padStart(2, '0'));
+
+            const totalCollected = filteredRents.reduce((sum, r) => sum + (r.paid || 0), 0);
+            const totalDue = filteredRents.reduce((sum, r) => sum + (r.due || 0), 0);
+            const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+            const totalShopDue = filteredShop.reduce((sum, s) => sum + (s.amount || 0), 0);
+
+            document.getElementById('totalRooms').textContent = toBanglaNum(rooms.length);
+            document.getElementById('totalTenants').textContent = toBanglaNum(tenants.length);
+            document.getElementById('totalRent').textContent = formatCurrency(totalCollected);
+            document.getElementById('totalDue').textContent = formatCurrency(totalDue);
+            document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
+            document.getElementById('totalShopDue').textContent = formatCurrency(totalShopDue);
+
+            const netPosition = totalCollected - totalExpenses - totalShopDue;
+            const netEl = document.getElementById('netPosition');
+            const netValueEl = document.getElementById('netPositionValue');
+            
+            netValueEl.textContent = formatCurrency(netPosition);
+            netEl.style.background = netPosition >= 0 ? 'var(--bg-secondary)' : 'var(--danger)';
+            netEl.style.color = netPosition >= 0 ? 'var(--text)' : 'white';
+        }
+
+        function updateRoomSelects() {
+            const sel = document.getElementById('tenantRoom');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">সিলেক্ট</option>' + rooms.map(r => `<option value="${escapeHTML(r.roomNo)}">${escapeHTML(r.roomNo)}</option>`).join('');
+        }
+
+        function updateTenantSelects() {
+            const sel = document.getElementById('rentTenant');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">সিলেক্ট</option>' + tenants.map(t => `<option value="${t.id}">${escapeHTML(t.name)} - ${escapeHTML(t.roomNo)}</option>`).join('');
+        }
+
+        // CRUD - Rooms
+        async function saveRoom() {
+            const roomNo = document.getElementById('roomNo').value.trim();
+            const rent = parseFloat(document.getElementById('roomRent').value) || 0;
+            const gasBill = parseFloat(document.getElementById('gasBill').value) || 0;
+            const waterBill = parseFloat(document.getElementById('waterBill').value) || 0;
+            const wasteBill = parseFloat(document.getElementById('wasteBill').value) || 0;
+            const meterNo = document.getElementById('meterNo').value.trim();
+
+            if (!roomNo) { showError('রুম নম্বর দিন'); return; }
+
+            const data = { roomNo, rent, gasBill, waterBill, wasteBill, meterNo };
+
+            try {
+                if (editRoomId) {
+                    await db.collection('rooms').doc(editRoomId).set(data, { merge: true });
+                    showToast(translations[currentLang].updateSuccess);
+                    editRoomId = null;
+                } else {
+                    const existing = rooms.find(r => r.roomNo === roomNo);
+                    if (existing) { showError('রুম নম্বর ইতিমধ্যে আছে'); return; }
+                    await db.collection('rooms').add(data);
+                    showToast(translations[currentLang].saveSuccess);
+                }
+                resetRoomForm();
+                toggleRoomForm();
+            } catch (e) { 
+                console.error("Save room error:", e);
+                showError('সেভ ব্যর্থ: ' + e.message); 
+            }
+        }
+
+        function editRoom(id) {
+            const room = rooms.find(r => r.id === id);
+            if (!room) return;
+            
+            editRoomId = id;
+            document.getElementById('roomNo').value = room.roomNo || '';
+            document.getElementById('roomRent').value = room.rent || '';
+            document.getElementById('gasBill').value = room.gasBill || '';
+            document.getElementById('waterBill').value = room.waterBill || '';
+            document.getElementById('wasteBill').value = room.wasteBill || '';
+            document.getElementById('meterNo').value = room.meterNo || '';
+            
+            document.getElementById('roomFormTitle').textContent = translations[currentLang].roomUpdateTitle;
+            document.getElementById('saveRoomBtn').textContent = translations[currentLang].roomUpdateTitle;
+            
+            // Show form
+            roomFormVisible = true;
+            document.getElementById('roomFormSection').style.display = 'block';
+            const btn = document.getElementById('roomAddBtn');
+            btn.textContent = '✕';
+            btn.style.background = 'var(--danger)';
+        }
+
+        async function deleteRoom(id) {
+            if (!confirm('ডিলিট করতে চান?')) return;
+            try {
+                await db.collection('rooms').doc(id).delete();
+                showToast(translations[currentLang].deleteSuccess);
+            } catch (e) { showError(e.message); }
+        }
+
+        function cancelRoomEdit() {
+            editRoomId = null;
+            resetRoomForm();
+            toggleRoomForm();
+        }
+
+        function resetRoomForm() {
+            document.getElementById('roomNo').value = '';
+            document.getElementById('roomRent').value = '';
+            document.getElementById('gasBill').value = '';
+            document.getElementById('waterBill').value = '';
+            document.getElementById('wasteBill').value = '';
+            document.getElementById('meterNo').value = '';
+            document.getElementById('roomFormTitle').textContent = translations[currentLang].roomFormTitle;
+            document.getElementById('saveRoomBtn').textContent = translations[currentLang].save;
+        }
+
+        // CRUD - Tenants
+        async function saveTenant() {
+            const name = document.getElementById('tenantName').value.trim();
+            const phone = document.getElementById('tenantPhone').value.trim();
+            const roomNo = document.getElementById('tenantRoom').value;
+            const nid = document.getElementById('tenantNID').value.trim();
+
+            if (!name) { showError('নাম দিন'); return; }
+            if (!roomNo) { showError('রুম সিলেক্ট করুন'); return; }
+
+            const data = { name, phone, roomNo, nid };
+
+            try {
+                if (editTenantId) {
+                    await db.collection('tenants').doc(editTenantId).set(data, { merge: true });
+                    showToast(translations[currentLang].updateSuccess);
+                    editTenantId = null;
+                } else {
+                    await db.collection('tenants').add(data);
+                    showToast(translations[currentLang].saveSuccess);
+                }
+                resetTenantForm();
+                toggleTenantForm();
+            } catch (e) { 
+                console.error("Save tenant error:", e);
+                showError('সেভ ব্যর্থ: ' + e.message); 
+            }
+        }
+
+        function editTenant(id) {
+            const tenant = tenants.find(t => t.id === id);
+            if (!tenant) return;
+            
+            editTenantId = id;
+            document.getElementById('tenantName').value = tenant.name || '';
+            document.getElementById('tenantPhone').value = tenant.phone || '';
+            document.getElementById('tenantRoom').value = tenant.roomNo || '';
+            document.getElementById('tenantNID').value = tenant.nid || '';
+            
+            document.getElementById('tenantFormTitle').textContent = translations[currentLang].tenantUpdateTitle;
+            document.getElementById('saveTenantBtn').textContent = translations[currentLang].tenantUpdateTitle;
+            
+            tenantFormVisible = true;
+            document.getElementById('tenantFormSection').style.display = 'block';
+            const btn = document.getElementById('tenantAddBtn');
+            btn.textContent = '✕';
+            btn.style.background = 'var(--danger)';
+        }
+
+        async function deleteTenant(id) {
+            if (!confirm('ডিলিট করতে চান?')) return;
+            try {
+                await db.collection('tenants').doc(id).delete();
+                showToast(translations[currentLang].deleteSuccess);
+            } catch (e) { showError(e.message); }
+        }
+
+        function cancelTenantEdit() {
+            editTenantId = null;
+            resetTenantForm();
+            toggleTenantForm();
+        }
+
+        function resetTenantForm() {
+            document.getElementById('tenantName').value = '';
+            document.getElementById('tenantPhone').value = '';
+            document.getElementById('tenantRoom').value = '';
+            document.getElementById('tenantNID').value = '';
+            document.getElementById('tenantFormTitle').textContent = translations[currentLang].tenantFormTitle;
+            document.getElementById('saveTenantBtn').textContent = translations[currentLang].save;
+        }
+
+        // CRUD - Rents
+        function updateRentAutoFill() {
+            const tenantId = document.getElementById('rentTenant').value;
+            const tenant = tenants.find(t => t.id === tenantId);
+            
+            if (tenant) {
+                document.getElementById('rentRoom').value = tenant.roomNo || '';
+                const room = rooms.find(r => r.roomNo === tenant.roomNo);
+                if (room) {
+                    const total = (room.rent || 0) + (room.gasBill || 0) + (room.waterBill || 0) + (room.wasteBill || 0);
+                    document.getElementById('totalCost').value = total;
+                    calcDue();
+                }
+            } else {
+                document.getElementById('rentRoom').value = '';
+                document.getElementById('totalCost').value = '';
+            }
+        }
+
+        function calcDue() {
+            const total = parseFloat(document.getElementById('totalCost').value) || 0;
+            const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+            document.getElementById('dueAmount').value = Math.max(0, total - paid);
+        }
+
+        async function saveRent() {
+            const date = document.getElementById('rentDate').value;
+            const tenantId = document.getElementById('rentTenant').value;
+            const roomNo = document.getElementById('rentRoom').value;
+            const totalCost = parseFloat(document.getElementById('totalCost').value) || 0;
+            const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+            const due = parseFloat(document.getElementById('dueAmount').value) || 0;
+
+            if (!date) { showError('তারিখ দিন'); return; }
+            if (!tenantId) { showError('ভাড়াটিয়া সিলেক্ট করুন'); return; }
+
+            const tenant = tenants.find(t => t.id === tenantId);
+            const data = { date, tenantId, tenantName: tenant?.name || '', roomNo, totalCost, paid, due, month: date.slice(0, 7) };
+
+            try {
+                if (editRentId) {
+                    await db.collection('rents').doc(editRentId).set(data, { merge: true });
+                    showToast(translations[currentLang].updateSuccess);
+                    editRentId = null;
+                } else {
+                    await db.collection('rents').add(data);
+                    showToast(translations[currentLang].saveSuccess);
+                }
+                resetRentForm();
+                toggleRentForm();
+            } catch (e) { 
+                console.error("Save rent error:", e);
+                showError('সেভ ব্যর্থ: ' + e.message); 
+            }
+        }
+
+        function editRent(id) {
+            const rent = rents.find(r => r.id === id);
+            if (!rent) return;
+            
+            editRentId = id;
+            document.getElementById('rentDate').value = rent.date || '';
+            document.getElementById('rentTenant').value = rent.tenantId || '';
+            document.getElementById('rentRoom').value = rent.roomNo || '';
+            document.getElementById('totalCost').value = rent.totalCost || 0;
+            document.getElementById('paidAmount').value = rent.paid || 0;
+            document.getElementById('dueAmount').value = rent.due || 0;
+            
+            document.getElementById('rentFormTitle').textContent = translations[currentLang].rentUpdateTitle;
+            document.getElementById('saveRentBtn').textContent = translations[currentLang].rentUpdateTitle;
+            
+            rentFormVisible = true;
+            document.getElementById('rentFormSection').style.display = 'block';
+            const btn = document.getElementById('rentAddBtn');
+            btn.textContent = '✕';
+            btn.style.background = 'var(--danger)';
+        }
+
+        async function deleteRent(id) {
+            if (!confirm('ডিলিট করতে চান?')) return;
+            try {
+                await db.collection('rents').doc(id).delete();
+                showToast(translations[currentLang].deleteSuccess);
+            } catch (e) { showError(e.message); }
+        }
+
+        function cancelRentEdit() {
+            editRentId = null;
+            resetRentForm();
+            toggleRentForm();
+        }
+
+        function resetRentForm() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('rentDate').value = today;
+            document.getElementById('rentTenant').value = '';
+            document.getElementById('rentRoom').value = '';
+            document.getElementById('totalCost').value = '';
+            document.getElementById('paidAmount').value = '';
+            document.getElementById('dueAmount').value = '';
+            document.getElementById('rentFormTitle').textContent = translations[currentLang].rentFormTitle;
+            document.getElementById('saveRentBtn').textContent = translations[currentLang].save;
+        }
+
+        // CRUD - Expenses
+        async function saveExpense() {
+            const date = document.getElementById('expDate').value;
+            const description = document.getElementById('expDesc').value.trim();
+            const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+
+            if (!date) { showError('তারিখ দিন'); return; }
+            if (!description) { showError('বিবরণ দিন'); return; }
+
+            const data = { date, description, amount, month: date.slice(0, 7) };
+
+            try {
+                if (editExpenseId) {
+                    await db.collection('expenses').doc(editExpenseId).set(data, { merge: true });
+                    showToast(translations[currentLang].updateSuccess);
+                    editExpenseId = null;
+                } else {
+                    await db.collection('expenses').add(data);
+                    showToast(translations[currentLang].saveSuccess);
+                }
+                resetExpenseForm();
+                toggleExpenseForm();
+            } catch (e) { 
+                console.error("Save expense error:", e);
+                showError('সেভ ব্যর্থ: ' + e.message); 
+            }
+        }
+
+        function editExpense(id) {
+            const exp = expenses.find(e => e.id === id);
+            if (!exp) return;
+            
+            editExpenseId = id;
+            document.getElementById('expDate').value = exp.date || '';
+            document.getElementById('expDesc').value = exp.description || '';
+            document.getElementById('expAmount').value = exp.amount || '';
+            
+            document.getElementById('expenseFormTitle').textContent = translations[currentLang].expenseUpdateTitle;
+            document.getElementById('saveExpenseBtn').textContent = translations[currentLang].expenseUpdateTitle;
+            
+            expenseFormVisible = true;
+            document.getElementById('expenseFormSection').style.display = 'block';
+            const btn = document.getElementById('expenseAddBtn');
+            btn.textContent = '✕';
+            btn.style.background = 'var(--danger)';
+        }
+
+        async function deleteExpense(id) {
+            if (!confirm('ডিলিট করতে চান?')) return;
+            try {
+                await db.collection('expenses').doc(id).delete();
+                showToast(translations[currentLang].deleteSuccess);
+            } catch (e) { showError(e.message); }
+        }
+
+        function cancelExpenseEdit() {
+            editExpenseId = null;
+            resetExpenseForm();
+            toggleExpenseForm();
+        }
+
+        function resetExpenseForm() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('expDate').value = today;
+            document.getElementById('expDesc').value = '';
+            document.getElementById('expAmount').value = '';
+            document.getElementById('expenseFormTitle').textContent = translations[currentLang].expenseFormTitle;
+            document.getElementById('saveExpenseBtn').textContent = translations[currentLang].save;
+        }
+
+        // CRUD - Shop
+        async function saveShopDue() {
+            const date = document.getElementById('shopDate').value;
+            const description = document.getElementById('shopDesc').value.trim();
+            const amount = parseFloat(document.getElementById('shopAmount').value) || 0;
+
+            if (!date) { showError('তারিখ দিন'); return; }
+            if (!description) { showError('বিবরণ দিন'); return; }
+
+            const data = { date, description, amount, month: date.slice(0, 7) };
+
+            try {
+                if (editShopId) {
+                    await db.collection('dokanBaki').doc(editShopId).set(data, { merge: true });
+                    showToast(translations[currentLang].updateSuccess);
+                    editShopId = null;
+                } else {
+                    await db.collection('dokanBaki').add(data);
+                    showToast(translations[currentLang].saveSuccess);
+                }
+                resetShopForm();
+                toggleShopForm();
+            } catch (e) { 
+                console.error("Save shop error:", e);
+                showError('সেভ ব্যর্থ: ' + e.message); 
+            }
+        }
+
+        function editShopDue(id) {
+            const shop = shopDues.find(s => s.id === id);
+            if (!shop) return;
+            
+            editShopId = id;
+            document.getElementById('shopDate').value = shop.date || '';
+            document.getElementById('shopDesc').value = shop.description || '';
+            document.getElementById('shopAmount').value = shop.amount || '';
+            
+            document.getElementById('shopFormTitle').textContent = translations[currentLang].shopUpdateTitle;
+            document.getElementById('saveShopBtn').textContent = translations[currentLang].shopUpdateTitle;
+            
+            shopFormVisible = true;
+            document.getElementById('shopFormSection').style.display = 'block';
+            const btn = document.getElementById('shopAddBtn');
+            btn.textContent = '✕';
+            btn.style.background = 'var(--danger)';
+        }
+
+        async function deleteShopDue(id) {
+            if (!confirm('ডিলিট করতে চান?')) return;
+            try {
+                await db.collection('dokanBaki').doc(id).delete();
+                showToast(translations[currentLang].deleteSuccess);
+            } catch (e) { showError(e.message); }
+        }
+
+        function cancelShopEdit() {
+            editShopId = null;
+            resetShopForm();
+            toggleShopForm();
+        }
+
+        function resetShopForm() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('shopDate').value = today;
+            document.getElementById('shopDesc').value = '';
+            document.getElementById('shopAmount').value = '';
+            document.getElementById('shopFormTitle').textContent = translations[currentLang].shopFormTitle;
+            document.getElementById('saveShopBtn').textContent = translations[currentLang].save;
+        }
+
+        // WhatsApp & SMS
+        function formatPhoneForMessage(phone) {
+            if (!phone) return '';
+            let num = phone.replace(/\D/g, '');
+            if (num.startsWith('0')) num = '88' + num;
+            return num;
+        }
+
+        function sendWhatsApp(phone, name, roomNo, amount) {
+            const msg = currentLang === 'bn' 
+                ? `আসসালামু আলাইকুম ${name},\n\nনাহিদ কুটির (রুম: ${roomNo}) বকেয়া ${formatCurrency(amount)}। দ্রুত পরিশোধ করুন।`
+                : `Assalamu Alaikum ${name},\n\nYour rent due at Nahid Kutir (Room ${roomNo}) is ${formatCurrency(amount)}. Please pay promptly.`;
+            
+            window.open(`https://wa.me/${formatPhoneForMessage(phone)}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function sendSMS(phone, name, roomNo, amount) {
+            const msg = currentLang === 'bn'
+                ? `${name}, নাহিদ কুটির (রুম: ${roomNo}) বকেয়া ${formatCurrency(amount)}।`
+                : `${name}, your rent due at Nahid Kutir (Room ${roomNo}) is ${formatCurrency(amount)}.`;
+            
+            window.location.href = `sms:${phone}?body=${encodeURIComponent(msg)}`;
+        }
+
+        // Backup & Restore
+        async function downloadBackup() {
+            showToast(translations[currentLang].backupSuccess);
+            
+            const backup = {
+                timestamp: new Date().toISOString(),
+                version: '10.9',
+                data: { rooms, tenants, rents, expenses, shopDues }
+            };
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Nahid_Kutir_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function restoreBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const backup = JSON.parse(await file.text());
+                if (!backup.data) { showError('অবৈধ ব্যাকআপ ফাইল'); return; }
+
+                let totalAdded = 0;
+
+                if (backup.data.rooms) {
+                    for (const room of backup.data.rooms) {
+                        if (!rooms.find(r => r.roomNo === room.roomNo)) {
+                            const { id, ...data } = room;
+                            await db.collection('rooms').add(data);
+                            totalAdded++;
+                        }
+                    }
+                }
+
+                if (backup.data.tenants) {
+                    for (const tenant of backup.data.tenants) {
+                        if (!tenants.find(t => t.name === tenant.name && t.roomNo === tenant.roomNo)) {
+                            const { id, ...data } = tenant;
+                            await db.collection('tenants').add(data);
+                            totalAdded++;
+                        }
+                    }
+                }
+
+                if (backup.data.rents) {
+                    for (const rent of backup.data.rents) {
+                        if (!rents.find(r => r.tenantId === rent.tenantId && r.date === rent.date)) {
+                            const { id, ...data } = rent;
+                            await db.collection('rents').add(data);
+                            totalAdded++;
+                        }
+                    }
+                }
+
+                if (backup.data.expenses) {
+                    for (const exp of backup.data.expenses) {
+                        if (!expenses.find(e => e.date === exp.date && e.description === exp.description)) {
+                            const { id, ...data } = exp;
+                            await db.collection('expenses').add(data);
+                            totalAdded++;
+                        }
+                    }
+                }
+
+                if (backup.data.shopDues) {
+                    for (const shop of backup.data.shopDues) {
+                        if (!shopDues.find(s => s.date === shop.date && s.description === shop.description)) {
+                            const { id, ...data } = shop;
+                            await db.collection('dokanBaki').add(data);
+                            totalAdded++;
+                        }
+                    }
+                }
+
+                showToast(translations[currentLang].restoreSuccess + ` (${totalAdded})`);
+            } catch (e) { showError(e.message); }
+
+            event.target.value = '';
+        }
+
+        function applyFilters() {
+            renderRents();
+            renderExpenses();
+            renderShopDues();
+            updateDashboard();
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            const monthNamesList = monthNames[currentLang];
+            return `${currentLang === 'bn' ? toBanglaNum(parseInt(parts[2])) : parts[2]} ${monthNamesList[parseInt(parts[1]) - 1]}, ${currentLang === 'bn' ? toBanglaNum(parts[0]) : parts[0]}`;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("Page loaded");
+            document.getElementById('passwordInput').addEventListener('keypress', e => {
+                if (e.key === 'Enter') handleLogin();
+            });
+        });
+    </script>
+</body>
+</html>
