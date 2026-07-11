@@ -867,6 +867,90 @@
             *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
         }
 
+
+
+        /* ═══════════ UNIFORM TAB SIZES + DEVICE LAYOUT ═══════════
+           Every navigation tab keeps exactly the same footprint. On compact
+           screens it scrolls horizontally; on wide desktop screens it fills
+           the whole row with seven equal columns. */
+        .tab-bar {
+            gap: 8px;
+            align-items: stretch;
+            scroll-padding-inline: 2px;
+        }
+        .tab-btn {
+            flex: 0 0 116px;
+            width: 116px;
+            min-width: 116px;
+            min-height: 38px;
+            padding-inline: 10px;
+            overflow: hidden;
+        }
+        .tab-btn .tab-label {
+            max-width: 72px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Tablet: retain large, identical touch targets while allowing a
+           natural horizontal scroll instead of compressing the labels. */
+        @media (min-width: 768px) and (max-width: 959px) {
+            .tab-bar { gap: 9px; padding-bottom: 13px; }
+            .tab-btn {
+                flex-basis: 126px;
+                width: 126px;
+                min-width: 126px;
+                height: 38px;
+                font-size: 13px;
+            }
+            .tab-btn .tab-label { max-width: 82px; }
+        }
+
+        /* Desktop: all seven tabs are equal columns with no empty area. */
+        @media (min-width: 960px) {
+            .tab-bar {
+                display: grid;
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+                overflow: visible;
+                gap: 10px;
+                padding: 4px 2px 14px;
+            }
+            .tab-btn {
+                width: 100%;
+                min-width: 0;
+                min-height: 40px;
+                height: 40px;
+                padding-inline: 9px;
+            }
+            .tab-btn .tab-label { max-width: none; }
+        }
+
+        /* Forms and cards maintain a clean grid on desktop, while mobile
+           stays single-column and touch-friendly. */
+        @media (min-width: 768px) {
+            #expForm, #dokanForm {
+                display: grid !important;
+                grid-template-columns: minmax(130px, .85fr) minmax(180px, 1.45fr) minmax(120px, .8fr);
+                gap: 12px !important;
+            }
+            #expForm input, #dokanForm input { margin-bottom: 0; min-width: 0; }
+            #expForm .form-actions, #dokanForm .form-actions {
+                grid-column: 1 / -1 !important;
+                display: flex;
+                gap: 12px;
+            }
+        }
+        @media (max-width: 767px) {
+            .tab-bar { gap: 7px; padding: 5px 2px 11px; }
+            .tab-btn { flex-basis: 116px; width: 116px; min-width: 116px; height: 38px; }
+            .tab-btn .tab-label { max-width: 72px; }
+            .section-split { gap: 16px; margin-bottom: 18px; }
+            .rent-section { margin-bottom: 18px; }
+            .form-actions { display: grid; grid-template-columns: 1fr; gap: 8px; }
+            .form-actions .ios-btn { width: 100%; margin-top: 0; }
+        }
+
     </style>
 </head>
 <body>
@@ -1340,18 +1424,11 @@
             console.error('[nk]', firebaseInitError, err);
             return;
         }
-        // Enable offline persistence when the browser supports it. The previous
-        // modular-cache API does not exist on the compat SDK used by this page.
-        // A second browser tab may decline persistence; cloud sync still works.
-        try {
-            if (db && typeof db.enablePersistence === 'function') {
-                db.enablePersistence({ synchronizeTabs: true }).catch(function (err) {
-                    console.warn('[nk] Firestore offline persistence unavailable:', err.code || err.message);
-                });
-            }
-        } catch (err) {
-            console.warn('[nk] Firestore offline persistence skipped:', err.message);
-        }
+        // Do not force IndexedDB / multi-tab persistence here. The app also
+        // runs inside sandboxed previews where access to localStorage is
+        // intentionally blocked. Firestore's default in-memory cache remains
+        // fully functional there and avoids SecurityError promise rejections.
+        // A normal deployed site can enable persistence separately if desired.
     })();
 
     // Surface Firebase init failure to the user right away (inline banner on
@@ -1888,27 +1965,68 @@
 
         if (db) {
             db.collection('rooms').onSnapshot(snap => {
-                roomData = []; snap.forEach(doc => roomData.push({id: doc.id, ...doc.data()}));
+                roomData = [];
+                snap.forEach(doc => {
+                    const raw = doc.data() || {};
+                    roomData.push({
+                        id: doc.id, ...raw,
+                        roomNo: textValue(raw.roomNo),
+                        rentAmount: numberValue(raw.rentAmount),
+                        gasBill: numberValue(raw.gasBill),
+                        waterBill: numberValue(raw.waterBill),
+                        wasteBill: numberValue(raw.wasteBill),
+                        meterNo: textValue(raw.meterNo)
+                    });
+                });
                 renderApp();
             }, err => console.log(err));
 
             db.collection('tenants').onSnapshot(snap => {
-                tenantData = []; snap.forEach(doc => tenantData.push({id: doc.id, ...doc.data()}));
+                tenantData = [];
+                snap.forEach(doc => {
+                    const raw = doc.data() || {};
+                    tenantData.push({
+                        id: doc.id, ...raw,
+                        name: textValue(raw.name), phone: textValue(raw.phone),
+                        room: textValue(raw.room), nid: textValue(raw.nid)
+                    });
+                });
                 renderApp();
             }, err => console.log(err));
 
             db.collection('rents').onSnapshot(snap => {
-                rentData = []; snap.forEach(doc => rentData.push({id: doc.id, ...doc.data()}));
+                rentData = [];
+                snap.forEach(doc => {
+                    const raw = doc.data() || {};
+                    const rent = numberValue(raw.rent);
+                    const paid = numberValue(raw.paid);
+                    rentData.push({
+                        id: doc.id, ...raw,
+                        date: textValue(raw.date), tenant: textValue(raw.tenant),
+                        phone: textValue(raw.phone), room: textValue(raw.room),
+                        rent: rent, paid: paid,
+                        due: (raw.due === undefined || raw.due === null || raw.due === '')
+                            ? rent - paid : numberValue(raw.due)
+                    });
+                });
                 renderApp();
             }, err => console.log(err));
 
             db.collection('expenses').onSnapshot(snap => {
-                expData = []; snap.forEach(doc => expData.push({id: doc.id, ...doc.data()}));
+                expData = [];
+                snap.forEach(doc => {
+                    const raw = doc.data() || {};
+                    expData.push({ id: doc.id, ...raw, date: textValue(raw.date), desc: textValue(raw.desc), amount: numberValue(raw.amount) });
+                });
                 renderApp();
             }, err => console.log(err));
 
             db.collection('dokanBaki').onSnapshot(snap => {
-                dokData = []; snap.forEach(doc => dokData.push({id: doc.id, ...doc.data()}));
+                dokData = [];
+                snap.forEach(doc => {
+                    const raw = doc.data() || {};
+                    dokData.push({ id: doc.id, ...raw, date: textValue(raw.date), desc: textValue(raw.desc), amount: numberValue(raw.amount) });
+                });
                 renderApp();
             }, err => console.log(err));
         }
@@ -2006,8 +2124,26 @@
         document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
     }
 
+    // Normalize legacy/partial Firestore values before they reach the UI.
+    // This prevents a missing amount from breaking renderApp with
+    // "undefined.toLocaleString" and keeps totals numeric rather than strings.
+    function numberValue(value) {
+        if (typeof value === 'string') value = value.replace(/[৳,\s]/g, '');
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function textValue(value) {
+        return value === undefined || value === null ? '' : String(value);
+    }
+
+    function roomTotal(room) {
+        return numberValue(room && room.rentAmount) + numberValue(room && room.gasBill) +
+               numberValue(room && room.waterBill) + numberValue(room && room.wasteBill);
+    }
+
     function formatCurrency(amt) {
-        return t('currencySymbol') + amt.toLocaleString();
+        return t('currencySymbol') + numberValue(amt).toLocaleString();
     }
 
     // --- SUBMISSIONS HANDLERS ---
@@ -2054,7 +2190,7 @@
                 document.getElementById('dispPhone').value = tObj.phone;
                 const rObj = roomData.find(rm => rm.roomNo.trim() === tObj.room.trim());
                 if(rObj) {
-                    const totalCost = rObj.rentAmount + (rObj.gasBill || 0) + (rObj.waterBill || 0) + (rObj.wasteBill || 0);
+                    const totalCost = roomTotal(rObj);
                     document.getElementById('rent').value = totalCost;
                 } else {
                     document.getElementById('rent').value = '';
@@ -2334,7 +2470,7 @@
         tenantData.sort((a,b) => a.room.localeCompare(b.room, undefined, {numeric: true})).forEach(tn => {
             const matchedRoom = roomData.find(r => r.roomNo.trim() === tn.room.trim());
             if(matchedRoom) {
-                tenantExpectedCapacity += matchedRoom.rentAmount + (matchedRoom.gasBill || 0) + (matchedRoom.waterBill || 0) + (matchedRoom.wasteBill || 0);
+                tenantExpectedCapacity += roomTotal(matchedRoom);
             }
             tenantBody.innerHTML += `<tr>
                 <td>${escapeHTML(tn.name)}</td>
@@ -2363,19 +2499,22 @@
             const matchM = (monthFilter === 'all' || parts[1] === monthFilter);
             return matchY && matchM;
         }).sort((a,b) => b.date.localeCompare(a.date)).forEach(rt => {
-            totalExpectedSum += (rt.rent || 0);
-            totalIncome += (rt.paid || 0);
-            const statusStr = rt.due <= 0 ? 
+            const rentAmount = numberValue(rt.rent);
+            const paidAmount = numberValue(rt.paid);
+            const dueAmount = numberValue(rt.due);
+            totalExpectedSum += rentAmount;
+            totalIncome += paidAmount;
+            const statusStr = dueAmount <= 0 ? 
                 `<span style="color:var(--ios-green); font-weight:bold;">${t('paidStatus')}</span>` : 
-                `<span style="color:var(--ios-red); font-weight:bold;">${t('dueStatus')} ${formatCurrency(rt.due)} ${t('dueSuffix')}</span>`;
+                `<span style="color:var(--ios-red); font-weight:bold;">${t('dueStatus')} ${formatCurrency(dueAmount)} ${t('dueSuffix')}</span>`;
                 
-            const waButton = rt.due > 0 ? `<button onclick="sendWhatsAppReminder('${rt.id}')" class="action-btn" style="margin-left:5px;">💬</button>` : '';
+            const waButton = dueAmount > 0 ? `<button onclick="sendWhatsAppReminder('${rt.id}')" class="action-btn" style="margin-left:5px;">💬</button>` : '';
 
             rentBody.innerHTML += `<tr>
                 <td data-label="${escapeHTML(t('thRentDate'))}"><span class="cell-value">${escapeHTML(rt.date)}</span></td>
                 <td data-label="${escapeHTML(t('thRentName'))}"><span class="cell-value"><b>${escapeHTML(rt.tenant)}</b> (${escapeHTML(t('roomText'))}: ${escapeHTML(rt.room)})</span></td>
-                <td data-label="${escapeHTML(t('thRentAmount'))}"><span class="cell-value">${formatCurrency(rt.rent)}</span></td>
-                <td data-label="${escapeHTML(t('thPaidAmount'))}"><span class="cell-value">${formatCurrency(rt.paid)}</span></td>
+                <td data-label="${escapeHTML(t('thRentAmount'))}"><span class="cell-value">${formatCurrency(rentAmount)}</span></td>
+                <td data-label="${escapeHTML(t('thPaidAmount'))}"><span class="cell-value">${formatCurrency(paidAmount)}</span></td>
                 <td data-label="${escapeHTML(t('thDueStatus'))}"><span class="cell-value">${statusStr}${waButton}</span></td>
                 <td class="no-print">
                     <button onclick="startEdit('rent', '${rt.id}')" class="action-btn" style="color:var(--accent-blue)">✎</button>
@@ -2426,7 +2565,7 @@
             const roomKey = rt.room.trim();
             roomHasEntryMap.set(roomKey, true);
             const prevDue = roomDueMap.has(roomKey) ? roomDueMap.get(roomKey) : 0;
-            roomDueMap.set(roomKey, prevDue + (rt.due || 0));
+            roomDueMap.set(roomKey, prevDue + numberValue(rt.due));
         });
 
         let unpaidCount = 0;
@@ -2445,7 +2584,7 @@
                     const mRoom = roomData.find(r => r.roomNo.trim() === roomNoTrimmed);
                     displayDue = 0;
                     if (mRoom) {
-                        displayDue = mRoom.rentAmount + (mRoom.gasBill || 0) + (mRoom.waterBill || 0) + (mRoom.wasteBill || 0);
+                        displayDue = roomTotal(mRoom);
                     }
                 }
                 
@@ -2493,7 +2632,7 @@
                 .filter(x => inMonthYear(x.date))
                 .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
             filteredExp.forEach(ex => {
-                totalExp += (ex.amount || 0);
+                totalExp += numberValue(ex.amount);
                 expHtml += `<tr>
                     <td>${escapeHTML(ex.date)}</td>
                     <td>${escapeHTML(ex.desc)}</td>
@@ -2523,7 +2662,7 @@
                 .filter(x => inMonthYear(x.date))
                 .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
             filteredDok.forEach(dk => {
-                totalDok += (dk.amount || 0);
+                totalDok += numberValue(dk.amount);
                 dokHtml += `<tr>
                     <td>${escapeHTML(dk.date)}</td>
                     <td>${escapeHTML(dk.desc)}</td>
@@ -2693,5 +2832,5 @@
     }
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a19a5f40983bdae6',t:'MTc4Mzc5OTc5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a19a6ca8da94c3a2',t:'MTc4MzgwMDM0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
