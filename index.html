@@ -2472,7 +2472,12 @@
         const roomBody = document.getElementById('roomBody');
         roomBody.innerHTML = '';
         let tenantExpectedCapacity = 0;
+        let totalRent = 0, totalGas = 0, totalWater = 0, totalWaste = 0;
         roomData.sort((a,b) => a.roomNo.localeCompare(b.roomNo, undefined, {numeric: true})).forEach(rm => {
+            totalRent += numberValue(rm.rentAmount);
+            totalGas += numberValue(rm.gasBill);
+            totalWater += numberValue(rm.waterBill);
+            totalWaste += numberValue(rm.wasteBill);
             roomBody.innerHTML += `<tr>
                 <td><b>${escapeHTML(rm.roomNo)}</b></td>
                 <td>${formatCurrency(rm.rentAmount)}</td>
@@ -2486,6 +2491,18 @@
                 </td>
             </tr>`;
         });
+        // Add total row
+        if(roomData.length > 0) {
+            roomBody.innerHTML += `<tr style="font-weight:bold; background:var(--ios-input); border-top: 2px solid var(--card-border);">
+                <td style="font-weight:bold;">${t('totalRow')}</td>
+                <td>${formatCurrency(totalRent)}</td>
+                <td>${formatCurrency(totalGas)}</td>
+                <td>${formatCurrency(totalWater)}</td>
+                <td>${formatCurrency(totalWaste)}</td>
+                <td>-</td>
+                <td class="no-print"></td>
+            </tr>`;
+        }
 
         // 2. Tenants Update
         const tenantBody = document.getElementById('tenantBody');
